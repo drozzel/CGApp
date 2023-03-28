@@ -1,27 +1,34 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from flask import Flask, request, jsonify
+from transformers import GPT2Tokenizer, GPT2LMHeadModel
 import torch
-
-tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-medium")
-model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-medium")
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-
-from flask import Flask, jsonify, request
+import gzip
+import os
 
 app = Flask(__name__)
 
-@app.route('/generate', methods=['POST'])
-def generate():
-    input_text = request.json['input_text']
+# Load compressed model from file
+model_path = "path/to/compressed/model/file.gz"
+with gzip.open(model_path, "rb") as f:
+    buffer = f.read()
+model = torch.load(buffer)
 
-    input_ids = tokenizer.encode(input_text + tokenizer.eos_token, return_tensors='pt').to(device)
-    output = model.generate(input_ids, max_length=1000, pad_token_id=tokenizer.eos_token_id)
+# Load tokenizer
+tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 
-    response_text = tokenizer.decode(output[0], skip_special_tokens=True)
+@app.route('/', methods=['POST'])
+def generate_text():
+    data = request.get_json()
+    input_text = data['input_text']
 
-    return jsonify({'response_text': response_text})
+    # Tokenize input text
+    input_ids = tokenizer.encode(input_text, return_tensors='pt')
 
+    # Generate response
+    generated_ids = model.generate(input_ids, max_length=1000, do_sample=True)
+    generated_text = tokenizer.decode(generated_ids[0], skip_special_tokens=True)
+
+    response = {'generated_text': generated_text}
+    return jsonify(response)
 
 if __name__ == '__main__':
     app.run(debug=True)
