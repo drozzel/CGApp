@@ -1,14 +1,15 @@
 import os
 import torch
-from transformers import pipeline, BertTokenizer
+import transformers
+from transformers import pipeline, GPT2TokenizerFast
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
 # Load the pre-trained model and tokenizer
-model_name = 'gpt2-small'
+model_name = 'gpt2'
+tokenizer = GPT2TokenizerFast.from_pretrained(model_name)
 model = pipeline('text-generation', model=model_name)
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 @app.route('/generate', methods=['POST'])
 def generate_text():
