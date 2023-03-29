@@ -1,4 +1,4 @@
-Flask==2.2.3
-torch==2.0.0
-transformers==4.27.3
+torch==1.7.0
+transformers==4.11.3
+flask==2.1.0
 waitress==2.0.0
