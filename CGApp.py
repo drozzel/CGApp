@@ -2,6 +2,8 @@ from flask import Flask, request
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import os
+import gzip
+import shutil
 
 app = Flask(__name__)
 
@@ -26,6 +28,16 @@ def chat():
     return {'response': response_text}
 
 if __name__ == '__main__':
+    # compress the model and tokenizer files using gzip
+    with open(model_path, 'rb') as f_in, gzip.open(model_path + '.gz', 'wb') as f_out:
+        shutil.copyfileobj(f_in, f_out)
+    with open(tokenizer_path, 'rb') as f_in, gzip.open(tokenizer_path + '.gz', 'wb') as f_out:
+        shutil.copyfileobj(f_in, f_out)
+
+    # remove the uncompressed model and tokenizer files
+    os.remove(model_path)
+    os.remove(tokenizer_path)
+
     # use waitress as the web server
     from waitress import serve
     serve(app, host='0.0.0.0', port=5000)
