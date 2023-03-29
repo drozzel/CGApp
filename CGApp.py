@@ -1,34 +1,31 @@
-from flask import Flask, request, jsonify
-from transformers import GPT2Tokenizer, GPT2LMHeadModel
+from flask import Flask, request
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
-import gzip
 import os
 
 app = Flask(__name__)
 
-# Load compressed model from file
-model_path = "path/to/compressed/model/file.gz"
-with gzip.open(model_path, "rb") as f:
-    buffer = f.read()
-model = torch.load(buffer)
+# load the compressed Chat GPT model and tokenizer
+model_path = os.path.join(os.getcwd(), "model.bin")
+tokenizer_path = os.path.join(os.getcwd(), "tokenizer")
+model = AutoModelForCausalLM.from_pretrained(model_path)
+tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 
-# Load tokenizer
-tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+# define the chat endpoint
+@app.route('/chat', methods=['POST'])
+def chat():
+    # get the input text from the request
+    input_text = request.json['text']
 
-@app.route('/', methods=['POST'])
-def generate_text():
-    data = request.get_json()
-    input_text = data['input_text']
-
-    # Tokenize input text
+    # encode the input text and generate a response
     input_ids = tokenizer.encode(input_text, return_tensors='pt')
+    response = model.generate(input_ids, max_length=50, num_beams=5, no_repeat_ngram_size=2, early_stopping=True)
+    response_text = tokenizer.decode(response[0], skip_special_tokens=True)
 
-    # Generate response
-    generated_ids = model.generate(input_ids, max_length=1000, do_sample=True)
-    generated_text = tokenizer.decode(generated_ids[0], skip_special_tokens=True)
-
-    response = {'generated_text': generated_text}
-    return jsonify(response)
+    # return the response text
+    return {'response': response_text}
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # use waitress as the web server
+    from waitress import serve
+    serve(app, host='0.0.0.0', port=5000)
