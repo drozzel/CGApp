@@ -1,29 +1,25 @@
-import os
-import torch
-import transformers
-from transformers import pipeline, GPT2TokenizerFast
-from flask import Flask, request, jsonify
+from fastapi import FastAPI
+from pydantic import BaseModel
+from cachetools import TTLCache
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import uvicorn
 
-app = Flask(__name__)
+app = FastAPI()
 
-# Load the pre-trained model and tokenizer
-model_name = 'gpt2'
-tokenizer = GPT2TokenizerFast.from_pretrained(model_name)
-model = pipeline('text-generation', model=model_name)
+class InputText(BaseModel):
+    input_text: str
 
-@app.route('/generate', methods=['POST'])
-def generate_text():
-    # Get the input text from the request
-    input_text = request.json['text']
+tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-small")
+model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-small")
 
-    # Tokenize the input text and generate new text
-    input_ids = tokenizer.encode(input_text, return_tensors='pt')
-    output = model.generate(input_ids)
+cache = TTLCache(maxsize=1000, ttl=300)
 
-    # Decode the generated output and return as a JSON response
-    output_text = tokenizer.decode(output[0], skip_special_tokens=True)
-    return jsonify({'text': output_text})
+@app.post("/generate")
+async def generate(input_text: InputText):
+    if input_text.input_text in cache:
+        response_text = cache[input_text.input_text]
+    else:
+        input_ids = tokenizer.encode(input_text.input_text + tokenizer.eos_token, return_tensors='pt')
+        output = model.generate(input_ids, max_length=1000, pad_token_id=tokenizer.eos_token_id)
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+        response_text = tokenizer.decode(output[0], skip
