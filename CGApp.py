@@ -22,4 +22,4 @@ async def generate(input_text: InputText):
         input_ids = tokenizer.encode(input_text.input_text + tokenizer.eos_token, return_tensors='pt')
         output = model.generate(input_ids, max_length=1000, pad_token_id=tokenizer.eos_token_id)
 
-        response_text = tokenizer.decode(output[0], skip)
+        response_text = tokenizer.decode(output[0], skip_special_tokens=True)
