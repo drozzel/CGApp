@@ -1,5 +1,5 @@
 --find-links https://download.pytorch.org/whl/torch_stable.html
-torch==1.11.0+cpu
+torch==1.13.0+cpu
 fastapi==0.95.0
 uvicorn==0.15.0
 transformers==4.27.3
