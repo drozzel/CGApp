@@ -1,1 +1,1 @@
-web: gunicorn app:CGApp
+web: gunicorn CGApp:app
