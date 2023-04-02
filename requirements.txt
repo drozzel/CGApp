@@ -1,8 +1,8 @@
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==1.11.0+cpu
 fastapi==0.95.0
 uvicorn==0.15.0
 transformers==4.27.3
 pydantic==1.10.7
 cachetools==4.2.2
--f https://download.pytorch.org/whl/cu117
-torch==2.0.0+cpu
 gunicorn==20.1.0
