@@ -11,7 +11,7 @@ class InputText(BaseModel):
 
 cache = TTLCache(maxsize=1000, ttl=300)
 
-@app.post("/generate")
+@app.get("/generate")
 async def generate(input_text: InputText):
     tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-small")
     model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-small")
