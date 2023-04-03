@@ -9,9 +9,13 @@ app = FastAPI()
 class InputText(BaseModel):
     input_text: str
 
-tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-small")
-model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-small")
+tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-medium")
+model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-medium")
 cache = TTLCache(maxsize=500, ttl=300)
+
+@app.get("/")
+async def root():
+    return {"message": "Hello, world!"}
 
 @app.post("/generate")
 async def generate(input_text: InputText):
